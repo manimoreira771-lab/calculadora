@@ -5,6 +5,7 @@ export interface UserCorrection {
   lang: string;
   reason: string;
   comment: string;
+  suggestedTranslation?: string;
   timestamp: number;
 }
 
@@ -40,6 +41,6 @@ export const formatCorrectionsForPrompt = (corrections: UserCorrection[]): strin
   if (corrections.length === 0) return "";
   
   return `\n\nUSER FEEDBACK CONTEXT (Please refine your response based on these past user reports):
-${corrections.map(c => `- For ${c.city || 'all cities'} in category "${c.category}": User reported "${c.reason}" ${c.comment ? `with comment: "${c.comment}"` : ''}`).join('\n')}
+${corrections.map(c => `- For ${c.city || 'all cities'} in category "${c.category}": User reported "${c.reason}" ${c.suggestedTranslation ? `(Suggested translation: "${c.suggestedTranslation}")` : ''} ${c.comment ? `with comment: "${c.comment}"` : ''}`).join('\n')}
 Please prioritize accuracy regarding these specific points in your new generated content.`;
 };

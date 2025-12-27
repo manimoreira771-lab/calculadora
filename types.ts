@@ -5,6 +5,8 @@ export interface BudgetCategory {
   icon: string;
 }
 
+export type HousingType = 'shared' | 'house';
+
 export interface CostItem {
   category: string;
   amount: number;
@@ -21,6 +23,7 @@ export interface BudgetResult {
   items: CostItem[];
   sources: { title: string; uri: string; snippet?: string }[];
   summary: string;
+  savingTips: { category: string; tip: string; icon: string }[];
   coordinates: {
     lat: number;
     lng: number;

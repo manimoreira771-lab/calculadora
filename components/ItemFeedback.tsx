@@ -14,6 +14,7 @@ const ItemFeedback: React.FC<ItemFeedbackProps> = ({ itemName, cityName, onClose
   const [submitted, setSubmitted] = useState(false);
   const [reason, setReason] = useState('');
   const [comment, setComment] = useState('');
+  const [suggestedTranslation, setSuggestedTranslation] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +27,7 @@ const ItemFeedback: React.FC<ItemFeedbackProps> = ({ itemName, cityName, onClose
       lang: lang,
       reason: reason,
       comment: comment,
+      suggestedTranslation: suggestedTranslation,
       timestamp: Date.now()
     });
 
@@ -73,6 +75,17 @@ const ItemFeedback: React.FC<ItemFeedbackProps> = ({ itemName, cityName, onClose
             <option value="outdated">{t('outdated', lang)}</option>
             <option value="incorrect">{t('incorrect', lang)}</option>
           </select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('suggested_translation', lang)}</label>
+          <input 
+            type="text"
+            value={suggestedTranslation}
+            onChange={(e) => setSuggestedTranslation(e.target.value)}
+            placeholder={t('suggested_translation_placeholder', lang)}
+            className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none"
+          />
         </div>
 
         <div className="space-y-1">
