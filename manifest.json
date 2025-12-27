@@ -1,0 +1,16 @@
+{
+  "name": "Volare Presupuesto",
+  "short_name": "Volare",
+  "description": "Calculadora inteligente de costo de vida global.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#d97706",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3233/3233514.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

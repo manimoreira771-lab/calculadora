@@ -1,0 +1,7 @@
+{
+  "name": "Volare Presupuesto: Calculadora Global de Vida",
+  "description": "Una sofisticada calculadora de presupuesto que obtiene datos reales del costo de vida para cualquier ciudad utilizando Gemini con búsqueda en Google. Filtra por categorías como vivienda, transporte y alimentación para estimar tu presupuesto mensual mínimo.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
