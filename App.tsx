@@ -8,9 +8,6 @@ import CityMap from './components/CityMap';
 import TestPanel from './components/TestPanel';
 import { t } from './services/i18n';
 
-// The AIStudio and window.aistudio types are already provided by the environment.
-// Redefining them here causes "Duplicate identifier" and "identical modifiers" errors.
-
 const App: React.FC = () => {
   const [lang, setLang] = useState(() => localStorage.getItem('urbancost_lang') || 'es');
   const [city, setCity] = useState('');
@@ -25,7 +22,7 @@ const App: React.FC = () => {
   const [result, setResult] = useState<BudgetResult | null>(null);
   const [error, setError] = useState<ServiceError | null>(null);
   
-  // hasKey: null (cargando), false (necesita conectar), true (listo)
+  // hasKey: null (cargando), false (necesita conectar en AI Studio), true (listo para usar)
   const [hasKey, setHasKey] = useState<boolean | null>(null);
 
   const isEmbedded = new URLSearchParams(window.location.search).get('embed') === 'true';
@@ -36,34 +33,28 @@ const App: React.FC = () => {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  // Lógica robusta de verificación de API Key
+  // Lógica de verificación de API Key compatible con Vercel y AI Studio
   useEffect(() => {
     const checkKey = async () => {
-      // 1. Si process.env.API_KEY existe (inyectado por el entorno), estamos listos
-      if (process.env.API_KEY && process.env.API_KEY !== "") {
-        setHasKey(true);
-        return;
-      }
-
-      // 2. Si no hay env var, verificamos el diálogo de AI Studio (Wix/Preview)
-      try {
-        // @ts-ignore - aistudio is globally available in the AI Studio environment
-        if (window.aistudio) {
+      // @ts-ignore
+      if (window.aistudio) {
+        try {
+          // En entorno AI Studio/Wix, verificamos si el usuario ya seleccionó una clave
           // @ts-ignore
           const selected = await window.aistudio.hasSelectedApiKey();
           setHasKey(selected);
-        } else {
-          // Si no hay env var ni aistudio, estamos en un problema de configuración
+        } catch (e) {
           setHasKey(false);
         }
-      } catch (e) {
-        setHasKey(false);
+      } else {
+        // En Vercel u otros entornos, asumimos que se inyecta por process.env.API_KEY
+        // y permitimos el acceso directo. Si falla, el error lo capturará el fetch.
+        setHasKey(true);
       }
     };
     checkKey();
   }, []);
 
-  // Solo buscar sugerencias si tenemos una clave activa
   useEffect(() => {
     if (!hasKey || (city.length < 2 && !filters.country && !filters.region)) {
       setSuggestions([]);
@@ -75,12 +66,32 @@ const App: React.FC = () => {
         setSuggestions(results);
         setShowSuggestions(results.length > 0);
       } catch (e: any) { 
-        if (e.message?.includes("API Key")) setHasKey(false);
-        console.error(e); 
+        // Si hay un error de clave aquí, es que process.env.API_KEY está mal configurada
+        handleApiError(e);
       }
     }, 400);
     return () => clearTimeout(timer);
   }, [city, filters, lang, hasKey]);
+
+  const handleApiError = (err: any) => {
+    const msg = err.message || "";
+    if (msg.includes("API Key") || msg.includes("Requested entity was not found")) {
+      // Si estamos en Wix, forzar el selector. Si estamos en Vercel, mostrar error de config.
+      // @ts-ignore
+      if (window.aistudio) {
+        setHasKey(false);
+      } else {
+        setError(new ServiceError(
+          lang === 'es' 
+            ? "Error de API Key: La clave configurada en Vercel no es válida o no tiene permisos de facturación."
+            : "API Key Error: The key configured in Vercel is invalid or lacks billing permissions.",
+          'auth'
+        ));
+      }
+    } else {
+      setError(err instanceof ServiceError ? err : new ServiceError(msg, 'generic'));
+    }
+  };
 
   const handleSearch = async (targetCity?: string) => {
     const finalCity = targetCity || city;
@@ -96,11 +107,7 @@ const App: React.FC = () => {
       const data = await fetchCityBudgetData(finalCity, selectedIds, currencyCode, lang, housingType);
       setResult(data);
     } catch (err: any) {
-      // Si el error indica falta de clave o entidad no encontrada, resetear estado de clave
-      if (err.message?.includes("API Key") || err.message?.includes("Requested entity was not found")) {
-        setHasKey(false);
-      }
-      setError(err instanceof ServiceError ? err : new ServiceError(err.message, 'generic'));
+      handleApiError(err);
     } finally { setLoading(false); }
   };
 
@@ -109,11 +116,7 @@ const App: React.FC = () => {
     if (window.aistudio) {
       // @ts-ignore
       await window.aistudio.openSelectKey();
-      // Assume success after triggering the dialog to avoid race conditions
       setHasKey(true);
-    } else {
-      // En entorno local/Vercel sin Wix, informar que falta la variable
-      alert("Error: process.env.API_KEY no detectada. Por favor, revisa la configuración de Vercel.");
     }
   };
 
@@ -121,61 +124,46 @@ const App: React.FC = () => {
     setLang(prev => (prev === 'es' ? 'en' : 'es'));
   };
 
-  // 1. Estado de carga inicial
+  // Pantalla de carga mientras verificamos el entorno
   if (hasKey === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
-          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Iniciando Volare...</p>
+          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">VOLARE</p>
         </div>
       </div>
     );
   }
 
-  // 2. Pantalla de conexión (Si falta la clave)
+  // Solo mostrar pantalla de "Conectar" si estamos en un entorno que lo soporta (AI Studio)
   if (hasKey === false) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-        <div className="max-w-md w-full bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-blue-100 border border-slate-100 text-center animate-in fade-in zoom-in-95 duration-500">
-          <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-blue-200 rotate-3">
+        <div className="max-w-md w-full bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-100 text-center">
+          <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg rotate-3">
             <span className="text-white text-4xl font-black">V</span>
           </div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tighter mb-4">CONECTAR API</h1>
-          <p className="text-slate-500 font-medium mb-8 leading-relaxed">
+          <p className="text-slate-500 font-medium mb-8">
             {lang === 'es' 
-              ? 'Para realizar cálculos y búsquedas en tiempo real, Volare necesita conectarse a tu proyecto de Google Cloud.' 
-              : 'To perform real-time calculations and searches, Volare needs to connect to your Google Cloud project.'}
+              ? 'Conecta tu proyecto de Google Cloud para obtener datos reales.' 
+              : 'Connect your Google Cloud project to fetch real data.'}
           </p>
-          
           <button 
             onClick={handleConnectKey}
-            className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-blue-100 hover:bg-blue-700 hover:-translate-y-1 transition-all active:scale-95 mb-6"
+            className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-700 transition-all active:scale-95 mb-6"
           >
             {lang === 'es' ? 'Seleccionar API Key' : 'Select API Key'}
           </button>
-
-          <div className="space-y-2">
-            <a 
-              href="https://ai.google.dev/gemini-api/docs/billing" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="block text-xs font-bold text-slate-400 hover:text-blue-600 underline underline-offset-4 transition-colors"
-            >
-              {lang === 'es' ? 'Documentación de facturación' : 'Billing Documentation'}
-            </a>
-            <p className="text-[10px] text-slate-300 px-4">
-                {lang === 'es' 
-                    ? 'Si ya configuraste la clave en Vercel, asegúrate de que esté inyectada correctamente en el entorno de producción.' 
-                    : 'If you already configured the key in Vercel, ensure it is properly injected into the production environment.'}
-            </p>
-          </div>
+          <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-slate-400 underline">
+            {lang === 'es' ? 'Guía de Facturación' : 'Billing Guide'}
+          </a>
         </div>
       </div>
     );
   }
 
-  // 3. Aplicación Principal
   return (
     <div className={`min-h-screen ${isEmbedded ? 'pb-10' : 'pb-20'}`}>
       {!isEmbedded && (
@@ -202,7 +190,6 @@ const App: React.FC = () => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                 </button>
               </div>
-
               {showSuggestions && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-50">
                   {suggestions.map((s, idx) => (
@@ -211,11 +198,10 @@ const App: React.FC = () => {
                 </div>
               )}
             </div>
-
             <button 
               onClick={() => handleSearch()}
               disabled={loading || !city}
-              className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
+              className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-50"
             >
               {loading ? '...' : t('go', lang)}
             </button>
@@ -293,7 +279,6 @@ const App: React.FC = () => {
             <h2 className="text-xl font-extrabold tracking-tight text-slate-800">{t('configure_title', lang)}</h2>
           </div>
           <CategoryFilter selectedIds={selectedIds} onChange={setSelectedIds} lang={lang} />
-          
           <div className="flex items-center gap-4 mt-4">
             <div className="flex bg-slate-100 p-1 rounded-xl">
               <button onClick={() => setHousingType('shared')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${housingType === 'shared' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}`}>{t('shared_apartment', lang)}</button>
@@ -318,21 +303,20 @@ const App: React.FC = () => {
         ) : result ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="lg:col-span-2 space-y-8">
-              <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
+              <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-100">
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
                   <div>
                     <h2 className="text-4xl font-black text-slate-900 tracking-tighter">{result.city}</h2>
                     <p className="text-slate-500 font-medium mt-1 max-w-md">{result.summary}</p>
                   </div>
-                  <div className="bg-blue-600 text-white px-8 py-4 rounded-3xl text-center shadow-lg shadow-blue-200">
+                  <div className="bg-blue-600 text-white px-8 py-4 rounded-3xl text-center shadow-lg">
                     <p className="text-[10px] font-black uppercase tracking-widest opacity-80">{t('est_budget', lang)}</p>
                     <p className="text-4xl font-black">{result.currencySymbol}{result.totalMonthly.toLocaleString()}</p>
                   </div>
                 </div>
                 <BudgetChart items={result.items} currencySymbol={result.currencySymbol} lang={lang} />
               </div>
-
-              <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+              <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
                 <div className="p-6 border-b border-slate-100 bg-slate-50/50">
                   <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">{t('itemized_budget', lang)}</h3>
                 </div>
@@ -352,12 +336,10 @@ const App: React.FC = () => {
                 </div>
               </div>
             </div>
-
             <div className="space-y-8">
               <div className="h-72 bg-white rounded-[2.5rem] overflow-hidden shadow-xl border border-slate-100">
                 <CityMap lat={result.coordinates.lat} lng={result.coordinates.lng} cityName={result.city} />
               </div>
-
               <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-slate-100">
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">{t('data_sources', lang)}</h3>
                 <div className="space-y-3">
@@ -379,7 +361,6 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
-
       {!isEmbedded && <TestPanel />}
     </div>
   );
