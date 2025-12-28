@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { BudgetResult, CURRENCIES, LANGUAGES, SearchFilters, HousingType } from "../types";
 
@@ -13,7 +12,6 @@ export class ServiceError extends Error {
 
 export const fetchCitySuggestions = async (
   input: string, 
-  location?: { lat: number, lng: number },
   filters?: SearchFilters,
   langCode: string = 'es'
 ): Promise<string[]> => {

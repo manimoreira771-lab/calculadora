@@ -24,7 +24,6 @@ const CityMap: React.FC<CityMapProps> = ({ lat, lng, cityName }) => {
         zoomControl: false,
         attributionControl: false,
         scrollWheelZoom: false, // Prevent scroll hijacking on desktop
-        tap: true, // Specifically for mobile browsers
         touchZoom: 'center',
         bounceAtZoomLimits: true
       });

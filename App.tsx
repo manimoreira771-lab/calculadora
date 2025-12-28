@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchCityBudgetData, fetchCitySuggestions, ServiceError } from './services/geminiService';
-import { BudgetResult, CURRENCIES, LANGUAGES, SearchFilters, HousingType } from './types';
+import { BudgetResult, CURRENCIES, SearchFilters, HousingType } from './types';
 import CategoryFilter from './components/CategoryFilter';
 import BudgetChart from './components/BudgetChart';
 import CityMap from './components/CityMap';
@@ -9,7 +8,7 @@ import TestPanel from './components/TestPanel';
 import { t } from './services/i18n';
 
 const App: React.FC = () => {
-  const [lang] = useState(() => localStorage.getItem('urbancost_lang') || 'es');
+  const [lang, setLang] = useState(() => localStorage.getItem('urbancost_lang') || 'es');
   const [city, setCity] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -25,13 +24,18 @@ const App: React.FC = () => {
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    localStorage.setItem('urbancost_lang', lang);
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  useEffect(() => {
     if (city.length < 2 && !filters.country && !filters.region) {
       setSuggestions([]);
       return;
     }
     const timer = setTimeout(async () => {
       try {
-        const results = await fetchCitySuggestions(city, undefined, filters, lang);
+        const results = await fetchCitySuggestions(city, filters, lang);
         setSuggestions(results);
         setShowSuggestions(results.length > 0);
       } catch (e) { console.error(e); }
@@ -55,12 +59,23 @@ const App: React.FC = () => {
     } finally { setLoading(false); }
   };
 
+  const toggleLanguage = () => {
+    setLang(prev => (prev === 'es' ? 'en' : 'es'));
+  };
+
   return (
     <div className="min-h-screen pb-20">
-      {/* Header / Search */}
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 no-print">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <h1 className="text-xl font-black tracking-tighter text-blue-600 hidden sm:block">VOLARE</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-black tracking-tighter text-blue-600 hidden sm:block">VOLARE</h1>
+            <button 
+              onClick={toggleLanguage}
+              className="bg-slate-100 hover:bg-slate-200 px-3 py-1 rounded-full text-xs font-bold transition-colors border border-slate-200"
+            >
+              {lang === 'es' ? '🇺🇸 EN' : '🇪🇸 ES'}
+            </button>
+          </div>
           
           <div className="flex-1 max-w-lg relative" ref={suggestionsRef}>
             <div className="flex items-center bg-slate-100 rounded-full px-4 py-1.5 border-2 border-transparent focus-within:border-blue-400 focus-within:bg-white transition-all">
@@ -96,7 +111,6 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Advanced Filters Overlay */}
       {showAdvancedFilters && (
         <div className="bg-white border-b border-slate-200 p-4 animate-in slide-in-from-top duration-300 no-print">
           <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -111,10 +125,10 @@ const App: React.FC = () => {
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('city_size', lang)}</label>
               <select value={filters.population} onChange={(e) => setFilters({...filters, population: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-blue-400">
-                <option value="">Any Size</option>
-                <option value="small">Small (&lt; 100k)</option>
-                <option value="medium">Medium (100k - 1M)</option>
-                <option value="large">Large (&gt; 1M)</option>
+                <option value="">{t('any_size', lang)}</option>
+                <option value="small">{t('small', lang)} (&lt; 100k)</option>
+                <option value="medium">{t('medium', lang)} (100k - 1M)</option>
+                <option value="large">{t('large', lang)} (&gt; 1M)</option>
               </select>
             </div>
           </div>
@@ -122,7 +136,6 @@ const App: React.FC = () => {
       )}
 
       <main className="max-w-5xl mx-auto px-4 py-8">
-        {/* Step 1: Element Selection */}
         <section className="mb-12 no-print">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-sm">1</div>
@@ -153,7 +166,6 @@ const App: React.FC = () => {
           </div>
         ) : result ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Results Left Column */}
             <div className="lg:col-span-2 space-y-8">
               <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
@@ -190,7 +202,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Side Column */}
             <div className="space-y-8">
               <div className="h-72 bg-white rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200/50 border border-slate-100">
                 <CityMap lat={result.coordinates.lat} lng={result.coordinates.lng} cityName={result.city} />
@@ -200,7 +211,7 @@ const App: React.FC = () => {
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">{t('data_sources', lang)}</h3>
                 <div className="space-y-3">
                   {result.sources.map((s, i) => (
-                    <a key={i} href={s.uri} target="_blank" className="block p-3 bg-slate-50 rounded-2xl hover:bg-blue-50 transition-colors group">
+                    <a key={i} href={s.uri} target="_blank" rel="noopener noreferrer" className="block p-3 bg-slate-50 rounded-2xl hover:bg-blue-50 transition-colors group">
                       <p className="text-xs font-bold text-slate-800 group-hover:text-blue-700 truncate">{s.title}</p>
                       <p className="text-[9px] text-slate-400 mt-0.5 truncate">{s.uri}</p>
                     </a>
