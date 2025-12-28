@@ -2,8 +2,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { BudgetResult, CURRENCIES, LANGUAGES, SearchFilters, HousingType } from "../types";
 
-// Crear una nueva instancia justo antes de llamar a la API para asegurar que tiene la clave actualizada
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Always initialize a new GoogleGenAI instance right before the call
+const getAI = () => {
+  // Use process.env.API_KEY directly as required by guidelines
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+};
 
 export class ServiceError extends Error {
   constructor(public message: string, public type: string, public rawError?: any) {
@@ -37,6 +40,7 @@ export const fetchCitySuggestions = async (
     return JSON.parse(response.text || "[]");
   } catch (e) {
     console.error(e);
+    if (e instanceof Error && e.message.includes("API Key")) throw e;
     return [];
   }
 };
@@ -82,10 +86,20 @@ export const fetchCityBudgetData = async (
       },
     });
 
+    // When using googleSearch, response.text may contain conversational text or formatting.
+    // Use robust extraction to find the JSON block.
     const text = response.text || "";
     let cleanJson = text;
+    
     if (text.includes('```json')) {
       cleanJson = text.split('```json')[1].split('```')[0].trim();
+    } else if (text.includes('{')) {
+      // Find the first '{' and last '}' to extract the object
+      const start = text.indexOf('{');
+      const end = text.lastIndexOf('}');
+      if (start !== -1 && end !== -1) {
+        cleanJson = text.substring(start, end + 1);
+      }
     }
     
     const parsed = JSON.parse(cleanJson);
