@@ -114,9 +114,9 @@ const App: React.FC = () => {
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('city_size', lang)}</label>
               <select value={filters.population} onChange={(e) => setFilters({...filters, population: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-blue-400">
                 <option value="">Any Size</option>
-                <option value="small">Small (< 100k)</option>
+                <option value="small">Small (&lt; 100k)</option>
                 <option value="medium">Medium (100k - 1M)</option>
-                <option value="large">Large (> 1M)</option>
+                <option value="large">Large (&gt; 1M)</option>
               </select>
             </div>
           </div>
