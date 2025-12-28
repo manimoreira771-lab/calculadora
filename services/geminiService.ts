@@ -1,6 +1,8 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { BudgetResult, CURRENCIES, LANGUAGES, SearchFilters, HousingType } from "../types";
 
+// Crear una nueva instancia justo antes de llamar a la API para asegurar que tiene la clave actualizada
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export class ServiceError extends Error {
@@ -100,6 +102,6 @@ export const fetchCityBudgetData = async (
       currencySymbol: currencyInfo.symbol
     };
   } catch (e: any) {
-    throw new ServiceError(e.message, 'api');
+    throw new ServiceError(e.message, 'api', e);
   }
 };
