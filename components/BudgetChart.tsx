@@ -49,7 +49,7 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ items, currencySymbol, lang }
             />
             <Tooltip 
               cursor={{ fill: '#f8fafc' }}
-              formatter={(value: number) => [`${currencySymbol}${value.toLocaleString()}`, 'Amount']}
+              formatter={((value: any) => [`${currencySymbol}${value.toLocaleString()}`, 'Amount']) as any}
               contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
             />
             <Bar dataKey="value" radius={[0, 4, 4, 0]}>
@@ -76,7 +76,7 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ items, currencySymbol, lang }
               tickFormatter={(value) => `${currencySymbol}${value}`}
             />
             <Tooltip 
-              formatter={(value: number) => [`${currencySymbol}${value.toLocaleString()}`, 'Amount']}
+              formatter={((value: any) => [`${currencySymbol}${value.toLocaleString()}`, 'Amount']) as any}
               contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
             />
             <Line 
@@ -106,7 +106,7 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ items, currencySymbol, lang }
               ))}
             </Pie>
             <Tooltip 
-              formatter={(value: number) => `${currencySymbol}${value.toLocaleString()}`}
+              formatter={((value: any) => `${currencySymbol}${value.toLocaleString()}`) as any}
               contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
             />
             <Legend 
@@ -141,7 +141,7 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ items, currencySymbol, lang }
           }`}
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           {t('bar', lang)}
         </button>

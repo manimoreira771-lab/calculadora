@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchCityBudgetData, fetchCitySuggestions, ServiceError } from './services/geminiService';
-import { BudgetResult, BUDGET_CATEGORIES, CURRENCIES, LANGUAGES, SearchFilters, HousingType } from './types';
+import { BudgetResult, CURRENCIES, LANGUAGES, SearchFilters, HousingType } from './types';
 import CategoryFilter from './components/CategoryFilter';
 import BudgetChart from './components/BudgetChart';
 import CityMap from './components/CityMap';
@@ -9,7 +9,7 @@ import TestPanel from './components/TestPanel';
 import { t } from './services/i18n';
 
 const App: React.FC = () => {
-  const [lang, setLang] = useState(() => localStorage.getItem('urbancost_lang') || 'es');
+  const [lang] = useState(() => localStorage.getItem('urbancost_lang') || 'es');
   const [city, setCity] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -54,8 +54,6 @@ const App: React.FC = () => {
       setError(err instanceof ServiceError ? err : new ServiceError(err.message, 'generic'));
     } finally { setLoading(false); }
   };
-
-  const currentLang = LANGUAGES.find(l => l.code === lang) || LANGUAGES[0];
 
   return (
     <div className="min-h-screen pb-20">
