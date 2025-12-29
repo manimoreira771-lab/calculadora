@@ -39,7 +39,6 @@ const App: React.FC = () => {
       // @ts-ignore
       if (window.aistudio) {
         try {
-          // En entorno AI Studio/Wix, verificamos si el usuario ya seleccionó una clave
           // @ts-ignore
           const selected = await window.aistudio.hasSelectedApiKey();
           setHasKey(selected);
@@ -47,8 +46,6 @@ const App: React.FC = () => {
           setHasKey(false);
         }
       } else {
-        // En Vercel u otros entornos, asumimos que se inyecta por process.env.API_KEY
-        // y permitimos el acceso directo. Si falla, el error lo capturará el fetch.
         setHasKey(true);
       }
     };
@@ -66,7 +63,6 @@ const App: React.FC = () => {
         setSuggestions(results);
         setShowSuggestions(results.length > 0);
       } catch (e: any) { 
-        // Si hay un error de clave aquí, es que process.env.API_KEY está mal configurada
         handleApiError(e);
       }
     }, 400);
@@ -76,7 +72,6 @@ const App: React.FC = () => {
   const handleApiError = (err: any) => {
     const msg = err.message || "";
     if (msg.includes("API Key") || msg.includes("Requested entity was not found")) {
-      // Si estamos en Wix, forzar el selector. Si estamos en Vercel, mostrar error de config.
       // @ts-ignore
       if (window.aistudio) {
         setHasKey(false);
@@ -124,7 +119,6 @@ const App: React.FC = () => {
     setLang(prev => (prev === 'es' ? 'en' : 'es'));
   };
 
-  // Pantalla de carga mientras verificamos el entorno
   if (hasKey === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -136,7 +130,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Solo mostrar pantalla de "Conectar" si estamos en un entorno que lo soporta (AI Studio)
   if (hasKey === false) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
@@ -316,6 +309,33 @@ const App: React.FC = () => {
                 </div>
                 <BudgetChart items={result.items} currencySymbol={result.currencySymbol} lang={lang} />
               </div>
+
+              {/* Hacks de Ahorro Section */}
+              {result.savingTips && result.savingTips.length > 0 && (
+                <div className="bg-amber-50 rounded-[2.5rem] p-8 border border-amber-100 shadow-xl shadow-amber-900/5">
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="text-2xl">💡</span>
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900 tracking-tight leading-tight">{t('saving_tips_title', lang)}</h3>
+                      <p className="text-xs font-bold text-amber-700 uppercase tracking-widest">{t('saving_tips_subtitle', lang)}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {result.savingTips.map((tip, idx) => (
+                      <div key={idx} className="bg-white p-5 rounded-3xl border border-amber-100 shadow-sm flex items-start gap-4 hover:translate-y-[-2px] transition-transform">
+                        <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-xl flex-shrink-0">
+                          {tip.icon || '📌'}
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">{tip.category}</p>
+                          <p className="text-sm font-bold text-slate-800 leading-snug">{tip.tip}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
                 <div className="p-6 border-b border-slate-100 bg-slate-50/50">
                   <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">{t('itemized_budget', lang)}</h3>

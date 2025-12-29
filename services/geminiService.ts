@@ -68,9 +68,10 @@ export const fetchCityBudgetData = async (
         
         Rules:
         1. All amounts in ${currencyInfo.label} (${currencyCode}).
-        2. Descriptions in ${langInfo.name}.
+        2. Descriptions and tips in ${langInfo.name}.
         3. Use real-time data for the cheapest options (e.g., student housing, local markets).
         4. Total Monthly MUST be the sum of included items.
+        5. Include 3-4 "savingTips" that are hyper-local hacks for this specific city.
 
         Format: JSON
         {
@@ -79,6 +80,7 @@ export const fetchCityBudgetData = async (
           "totalMonthly": number,
           "summary": "String",
           "items": [{"category": "String", "amount": number, "description": "String", "explanation": "String"}],
+          "savingTips": [{"category": "String", "tip": "String", "icon": "Emoji"}],
           "coordinates": {"lat": number, "lng": number}
         }`,
       config: {
@@ -86,15 +88,12 @@ export const fetchCityBudgetData = async (
       },
     });
 
-    // When using googleSearch, response.text may contain conversational text or formatting.
-    // Use robust extraction to find the JSON block.
     const text = response.text || "";
     let cleanJson = text;
     
     if (text.includes('```json')) {
       cleanJson = text.split('```json')[1].split('```')[0].trim();
     } else if (text.includes('{')) {
-      // Find the first '{' and last '}' to extract the object
       const start = text.indexOf('{');
       const end = text.lastIndexOf('}');
       if (start !== -1 && end !== -1) {
@@ -113,7 +112,8 @@ export const fetchCityBudgetData = async (
       ...parsed,
       sources: sources.slice(0, 5),
       currency: currencyCode,
-      currencySymbol: currencyInfo.symbol
+      currencySymbol: currencyInfo.symbol,
+      savingTips: parsed.savingTips || []
     };
   } catch (e: any) {
     throw new ServiceError(e.message, 'api', e);
