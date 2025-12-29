@@ -5,8 +5,8 @@ import { BudgetResult, CURRENCIES, LANGUAGES, SearchFilters, HousingType } from 
 // Always initialize a new GoogleGenAI instance right before the call
 const getAI = () => {
   // Usamos la nueva forma para Vite
-  const key = import.meta.env.VITE_GEMINI_API_KEY;
-  return new GoogleGenAI({ apiKey: key });
+  const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+  return new GoogleGenAI({ apiKey });
 };
 
 export class ServiceError extends Error {
