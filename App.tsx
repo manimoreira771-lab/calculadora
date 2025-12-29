@@ -6,6 +6,7 @@ import CategoryFilter from './components/CategoryFilter';
 import BudgetChart from './components/BudgetChart';
 import CityMap from './components/CityMap';
 import TestPanel from './components/TestPanel';
+import SpeedInsights from './components/SpeedInsights';
 import { t } from './services/i18n';
 
 const App: React.FC = () => {
@@ -165,7 +166,9 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen ${isEmbedded ? 'pb-10' : 'pb-20'}`}>
+    <>
+      <SpeedInsights />
+      <div className={`min-h-screen ${isEmbedded ? 'pb-10' : 'pb-20'}`}>
       {!isEmbedded && (
         <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 no-print">
           <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
@@ -363,6 +366,7 @@ const App: React.FC = () => {
       </main>
       {!isEmbedded && <TestPanel />}
     </div>
+    </>
   );
 };
 
