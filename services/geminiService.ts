@@ -4,8 +4,11 @@ import { BudgetResult, CURRENCIES, LANGUAGES, SearchFilters, HousingType } from 
 
 // Always initialize a new GoogleGenAI instance right before the call
 const getAI = () => {
-  // El "as any" le dice a TypeScript que no se queje por el .env
-  const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+  // Verificamos paso a paso para que no de error de 'undefined'
+  const meta = import.meta as any;
+  const env = meta.env || {}; 
+  const apiKey = env.VITE_GEMINI_API_KEY || '';
+  
   return new GoogleGenAI({ apiKey });
 };
 
