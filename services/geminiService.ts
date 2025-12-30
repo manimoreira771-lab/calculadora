@@ -4,8 +4,10 @@ import { BudgetResult, CURRENCIES, LANGUAGES, SearchFilters, HousingType } from 
 
 // Always initialize a new GoogleGenAI instance right before the call
 const getAI = () => {
-  // Usamos la nueva forma para Vite
-  const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+  // Acceso mediante corchetes para saltar la validación de TypeScript
+  const meta = import.meta as any;
+  const apiKey = meta['env']['VITE_GEMINI_API_KEY'] || '';
+  
   return new GoogleGenAI({ apiKey });
 };
 
