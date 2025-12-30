@@ -1,17 +1,16 @@
-
 {
   "cleanUrls": true,
   "framework": "vite",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
-   "headers": [
+  "headers": [
     {
       "source": "/(.*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'self' https://*.wix.com https://*.wixsite.com;"
+          "value": "frame-ancestors 'self' https://*.wix.com https://*.wixsite.com https://editor.wix.com"
         },
         {
           "key": "X-Frame-Options",
