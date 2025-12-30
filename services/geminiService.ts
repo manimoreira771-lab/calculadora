@@ -3,11 +3,9 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { BudgetResult, CURRENCIES, LANGUAGES, SearchFilters, HousingType } from "../types";
 
 // Always initialize a new GoogleGenAI instance right before the call
-const getAI = () => {
-  // Acceso mediante corchetes para saltar la validación de TypeScript
-  const meta = import.meta as any;
-  const apiKey = meta['env']['VITE_GEMINI_API_KEY'] || '';
-  
+cconst getAI = () => {
+  // El "as any" le dice a TypeScript que no se queje por el .env
+  const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
   return new GoogleGenAI({ apiKey });
 };
 
