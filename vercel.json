@@ -5,13 +5,13 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
-  "headers": [
+   "headers": [
     {
       "source": "/(.*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'self' https://*.wix.com https://*.wixstudio.io https://editor.wix.com https://*.wixsite.com;"
+          "value": "frame-ancestors 'self' https://*.wix.com https://*.wixsite.com;"
         },
         {
           "key": "X-Frame-Options",
