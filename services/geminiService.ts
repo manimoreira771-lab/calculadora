@@ -4,11 +4,13 @@ import { BudgetResult, CURRENCIES, LANGUAGES, SearchFilters, HousingType } from 
 
 // Always initialize a new GoogleGenAI instance right before the call
 const getAI = () => {
-  // Verificamos paso a paso para que no de error de 'undefined'
-  const meta = import.meta as any;
-  const env = meta.env || {}; 
-  const apiKey = env.VITE_GEMINI_API_KEY || '';
+  // Acceso directo a la variable de Vite
+  const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
   
+  if (!apiKey) {
+    throw new Error("API key is missing. Please check Vercel environment variables.");
+  }
+
   return new GoogleGenAI({ apiKey });
 };
 
